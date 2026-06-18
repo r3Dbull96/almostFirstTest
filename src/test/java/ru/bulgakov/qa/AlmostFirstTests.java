@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.bulgakov.pages.DemoqaPage;
 import ru.bulgakov.pages.PaymentPage;
+import ru.bulgakov.pages.WelcomePage;
 import ru.bulgakov.pages.YandexSearchPage;
 
 import static com.codeborne.selenide.Condition.text;
@@ -21,11 +22,15 @@ public class AlmostFirstTests {
         Configuration.pageLoadTimeout = 10000;
         Configuration.timeout = 10000;
 
-        PaymentPage paymentPage = open("https://ya.ru/", YandexSearchPage.class)
+        WelcomePage welcomePage = open("https://ya.ru/", YandexSearchPage.class)
                 .search("bulgakov qa")
                 .submit()
                 .closeDefaultBrowserSelectWindow()
-                .openLinkInNewTab("ivanbulgakovqa.ru")
+                .openLink("ivanbulgakovqa.ru");
+
+        switchTo().window(1);
+
+        PaymentPage paymentPage = welcomePage
                 .clickPrice()
                 .openGoToQaModal()
                 .choosePayment();
