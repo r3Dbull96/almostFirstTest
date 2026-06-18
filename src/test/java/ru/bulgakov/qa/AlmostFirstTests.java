@@ -6,10 +6,13 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.bulgakov.pages.DemoqaPage;
 import ru.bulgakov.pages.PaymentPage;
+import ru.bulgakov.pages.WelcomePage;
 import ru.bulgakov.pages.YandexSearchPage;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AlmostFirstTests {
     @Test
@@ -19,11 +22,15 @@ public class AlmostFirstTests {
         Configuration.pageLoadTimeout = 10000;
         Configuration.timeout = 10000;
 
-        PaymentPage paymentPage = open("https://ya.ru/", YandexSearchPage.class)
+        WelcomePage welcomePage = open("https://ya.ru/", YandexSearchPage.class)
                 .search("bulgakov qa")
                 .submit()
                 .closeDefaultBrowserSelectWindow()
-                .openLinkInNewTab("ivanbulgakovqa.ru")
+                .openLink("ivanbulgakovqa.ru");
+
+        switchTo().window(1);
+
+        PaymentPage paymentPage = welcomePage
                 .clickPrice()
                 .openGoToQaModal()
                 .choosePayment();
@@ -38,17 +45,28 @@ public class AlmostFirstTests {
         Configuration.pageLoadTimeout = 10000;
         Configuration.timeout = 10000;
 
+        String name = "Иванов Иван Иванович";
+        String email = "test@mail.ru";
+        String currentAddress = "г. Москва, ул. Ленина, д. 1";
+        String permanentAddress = "г. Москва, ул. Малышева, д. 1/2";
+
         DemoqaPage demoqaPage = open("https://demoqa.com/text-box", DemoqaPage.class)
-                .setUsername("Иванов Иван Иванович")
-                .setEmail("test@mail.ru")
-                .setCurrentAddress("г. Москва, ул. Ленина, д. 1")
-                .setPermanentAddress("г. Москва, ул. Малышева, д. 1/2")
+                .setUsername(name)
+                .setEmail(email)
+                .setCurrentAddress(currentAddress)
+                .setPermanentAddress(permanentAddress)
                 .scrollToSubmit()
                 .submit();
 
-        demoqaPage.getDisplayedName().shouldHave(text("Name:Иванов Иван Иванович"));
-        demoqaPage.getDisplayedEmail().shouldHave(text("Email:test@mail.ru"));
-        demoqaPage.getDisplayedCurrentAddress().shouldHave(text("Current Address :г. Москва, ул. Ленина, д. 1"));
-        demoqaPage.getDisplayedPermanentAddress().shouldHave(text("Permananet Address :г. Москва, ул. Малышева, д. 1/2"));
+        assertAll(
+                () -> assertEquals("Name:" + name,
+                        demoqaPage.getDisplayedName()),
+                () -> assertEquals("Email:" + email,
+                        demoqaPage.getDisplayedEmail()),
+                () -> assertEquals("Current Address :" + currentAddress,
+                        demoqaPage.getDisplayedCurrentAddress()),
+                () -> assertEquals("Permananet Address :" + permanentAddress,
+                        demoqaPage.getDisplayedPermanentAddress())
+        );
     }
 }
