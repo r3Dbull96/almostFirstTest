@@ -7,9 +7,9 @@ import static com.codeborne.selenide.Selenide.*;
 
 
 public class WelcomePage {
-    private final SelenideElement priceLink = $$(".t-menu__list li").last();
-    private final SelenideElement goToQaModal = $("[aria-haspopup='dialog']");
-    private final SelenideElement paymentLink = $(byText("Бегу оплачивать"));
+    private final SelenideElement priceLink = $$(".t-menu__list li").last(),
+            goToQaModal = $("[aria-haspopup='dialog']"),
+            paymentLink = $(byText("Бегу оплачивать"));
 
 
     public WelcomePage clickPrice() {

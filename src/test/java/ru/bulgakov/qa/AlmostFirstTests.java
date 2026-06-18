@@ -10,6 +10,8 @@ import ru.bulgakov.pages.YandexSearchPage;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AlmostFirstTests {
     @Test
@@ -38,17 +40,28 @@ public class AlmostFirstTests {
         Configuration.pageLoadTimeout = 10000;
         Configuration.timeout = 10000;
 
+        String name = "Иванов Иван Иванович";
+        String email = "test@mail.ru";
+        String currentAddress = "г. Москва, ул. Ленина, д. 1";
+        String permanentAddress = "г. Москва, ул. Малышева, д. 1/2";
+
         DemoqaPage demoqaPage = open("https://demoqa.com/text-box", DemoqaPage.class)
-                .setUsername("Иванов Иван Иванович")
-                .setEmail("test@mail.ru")
-                .setCurrentAddress("г. Москва, ул. Ленина, д. 1")
-                .setPermanentAddress("г. Москва, ул. Малышева, д. 1/2")
+                .setUsername(name)
+                .setEmail(email)
+                .setCurrentAddress(currentAddress)
+                .setPermanentAddress(permanentAddress)
                 .scrollToSubmit()
                 .submit();
 
-        demoqaPage.getDisplayedName().shouldHave(text("Name:Иванов Иван Иванович"));
-        demoqaPage.getDisplayedEmail().shouldHave(text("Email:test@mail.ru"));
-        demoqaPage.getDisplayedCurrentAddress().shouldHave(text("Current Address :г. Москва, ул. Ленина, д. 1"));
-        demoqaPage.getDisplayedPermanentAddress().shouldHave(text("Permananet Address :г. Москва, ул. Малышева, д. 1/2"));
+        assertAll(
+                () -> assertEquals("Name:" + name,
+                        demoqaPage.getDisplayedName()),
+                () -> assertEquals("Email:" + email,
+                        demoqaPage.getDisplayedEmail()),
+                () -> assertEquals("Current Address :" + currentAddress,
+                        demoqaPage.getDisplayedCurrentAddress()),
+                () -> assertEquals("Permananet Address :" + permanentAddress,
+                        demoqaPage.getDisplayedPermanentAddress())
+        );
     }
 }
