@@ -45,10 +45,10 @@ public class AlmostFirstTests {
         Configuration.pageLoadTimeout = 10000;
         Configuration.timeout = 10000;
 
-        String name = "Иванов Иван Иванович";
-        String email = "test@mail.ru";
-        String currentAddress = "г. Москва, ул. Ленина, д. 1";
-        String permanentAddress = "г. Москва, ул. Малышева, д. 1/2";
+        String name = "Иванов Иван Иванович",
+                email = "test@mail.ru",
+                currentAddress = "г. Москва, ул. Ленина, д. 1",
+                permanentAddress = "г. Москва, ул. Малышева, д. 1/2";
 
         DemoqaPage demoqaPage = open("https://demoqa.com/text-box", DemoqaPage.class)
                 .setUsername(name)
