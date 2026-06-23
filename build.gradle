@@ -9,6 +9,7 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testImplementation 'com.codeborne:selenide:7.16.2'
+    testImplementation 'net.datafaker:datafaker:2.6.0'
 }
 
 test {

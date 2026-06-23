@@ -1,13 +1,13 @@
-package ru.bulgakov.qa;
+package ru.bulgakov.mentor.qa;
 
 import com.codeborne.selenide.Configuration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import ru.bulgakov.pages.DemoqaPage;
-import ru.bulgakov.pages.PaymentPage;
-import ru.bulgakov.pages.WelcomePage;
-import ru.bulgakov.pages.YandexSearchPage;
+import ru.bulgakov.mentor.pages.DemoqaPage;
+import ru.bulgakov.mentor.pages.PaymentPage;
+import ru.bulgakov.mentor.pages.WelcomePage;
+import ru.bulgakov.mentor.pages.YandexSearchPage;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.*;
