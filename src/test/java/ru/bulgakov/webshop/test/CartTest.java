@@ -24,7 +24,7 @@ public class CartTest {
 
     @Test
     void addItemToCartTest() {
-        String quantity = String.valueOf(faker.number().numberBetween(1,10));;
+        String quantity = String.valueOf(faker.number().numberBetween(1,10));
 
         ProductPage productPage = open(WEB_SHOP_URL, WsWelcomePage.class)
                 .goToCatalogFromMenu(1, "Desktops")
