@@ -8,13 +8,14 @@ import ru.bulgakov.mentor.pages.DemoqaPage;
 import ru.bulgakov.mentor.pages.PaymentPage;
 import ru.bulgakov.mentor.pages.WelcomePage;
 import ru.bulgakov.mentor.pages.YandexSearchPage;
+import ru.bulgakov.webshop.TestBase;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AlmostFirstTests {
+public class AlmostFirstTests extends TestBase {
     @Test
     @DisplayName("Проверить что цена обучения = 47000 рублей")
     @Tag("POSITIVE")
