@@ -4,6 +4,7 @@ import com.codeborne.selenide.Configuration;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.bulgakov.webshop.TestBase;
 import ru.bulgakov.webshop.pages.CartPage;
 import ru.bulgakov.webshop.pages.ProductPage;
 import ru.bulgakov.webshop.pages.WsWelcomePage;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static ru.bulgakov.webshop.config.Config.TIMEOUT_MS;
 import static ru.bulgakov.webshop.config.Config.WEB_SHOP_URL;
 
-public class CartTest {
+public class CartTest extends TestBase {
     private final AuthSteps authSteps = new AuthSteps();
     private static final Faker faker = new Faker();
 
