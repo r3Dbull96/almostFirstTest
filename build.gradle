@@ -15,3 +15,9 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+task positiveTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'positive'
+    }
+}
