@@ -18,9 +18,6 @@ public class WsRegistrationPage {
     private final SelenideElement submitRegistrationButton = $("input#register-button");
     private final SelenideElement resultText = $("div.result");
     private final SelenideElement userEmailInHeader = $$("div.header-links ul li a").get(0);
-    private final SelenideElement emailValidationError = $("span[for=Email]");
-    private final SelenideElement passwordValidationError = $("span[for=Password]");
-    private final SelenideElement confirmPasswordValidationError = $("span[for=ConfirmPassword]");
 
     public WsRegistrationPage register(String firstName, String lastName, String email, String password) {
         selectMaleGender()
@@ -72,18 +69,6 @@ public class WsRegistrationPage {
     public WsRegistrationPage submitRegistration() {
         submitRegistrationButton.click();
         return this;
-    }
-
-    public String getEmailError() {
-        return emailValidationError.getText();
-    }
-
-    public String getPasswordError() {
-        return passwordValidationError.getText();
-    }
-
-    public String getConfirmPasswordError() {
-        return confirmPasswordValidationError.getText();
     }
 
     public WsRegistrationPage checkRegistrationCompleted() {
