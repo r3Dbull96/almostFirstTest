@@ -3,6 +3,8 @@ package ru.bulgakov.webshop.test;
 import com.codeborne.selenide.Configuration;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.bulgakov.webshop.TestBase;
 import ru.bulgakov.webshop.pages.CartPage;
@@ -28,7 +30,9 @@ public class CartTest extends TestBase {
     }
 
     @Test
-    void addItemToCartTest() {
+    @Tag("positive")
+    @DisplayName("Добавление товаров в корзину")
+    void addItemsToCartTest() {
         int processorIndex = 0; // 0 = slow, 1 = medium, 2 = fast
 
         ProductPage productPage = open(WEB_SHOP_URL, WsWelcomePage.class)

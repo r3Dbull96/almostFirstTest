@@ -2,9 +2,12 @@ package ru.bulgakov.webshop.test;
 
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
+import ru.bulgakov.webshop.TestBase;
 import ru.bulgakov.webshop.pages.WsRegistrationPage;
 import ru.bulgakov.webshop.pages.WsWelcomePage;
 
@@ -12,7 +15,7 @@ import static com.codeborne.selenide.Selenide.*;
 import static ru.bulgakov.webshop.config.Config.WEB_SHOP_REGISTRATION_URL;
 import static ru.bulgakov.webshop.config.Config.WEB_SHOP_URL;
 
-public class LoginTest {
+public class LoginTest extends TestBase {
     private static final Faker faker = new Faker();
     private String email;
     private String password;
@@ -24,10 +27,10 @@ public class LoginTest {
 
         open(WEB_SHOP_REGISTRATION_URL, WsRegistrationPage.class)
                 .register(
-                    faker.name().firstName(),
-                    faker.name().lastName(),
-                    email,
-                    password)
+                        faker.name().firstName(),
+                        faker.name().lastName(),
+                        email,
+                        password)
                 .checkUserLoggedIn(email);
 
         clearBrowserCookies();
@@ -35,6 +38,8 @@ public class LoginTest {
     }
 
     @Test
+    @Tag("positive")
+    @DisplayName("Успешный логин")
     void successLoginTest() {
 
         open(WEB_SHOP_URL, WsWelcomePage.class)
@@ -47,9 +52,10 @@ public class LoginTest {
                 .checkUserLoggedIn(email);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "Ошибка валидации email при логине")
+    @Tag("negative")
     @CsvFileSource(resources = "/email.csv")
-    void invalidEmailLoginTest(String email) {
+    void emailValidationErrorWhenLoggingTest(String email) {
         open(WEB_SHOP_URL, WsWelcomePage.class)
                 .openLogin()
                 .enterEmail(email)
