@@ -38,7 +38,7 @@ public class LoginTest {
 
     @Test
     @Tag("positive")
-    @DisplayName("Успешная логин")
+    @DisplayName("Успешный логин")
     void successLoginTest() {
 
         open(WEB_SHOP_URL, WsWelcomePage.class)
