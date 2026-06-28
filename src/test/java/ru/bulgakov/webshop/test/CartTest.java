@@ -31,7 +31,7 @@ public class CartTest extends TestBase {
 
     @Test
     @Tag("positive")
-    @DisplayName("Добавление товара в корзину")
+    @DisplayName("Добавление товаров в корзину")
     void addItemToCartTest() {
         int processorIndex = 0; // 0 = slow, 1 = medium, 2 = fast
 
