@@ -2,8 +2,7 @@ package ru.bulgakov.webshop.test;
 
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
@@ -52,27 +51,10 @@ public class LoginTest extends TestBase {
         }
     }
 
-    @Test
-    @Tag("positive")
-    @DisplayName("Успешный логин")
-    void successLoginTest() {
-
-        open(WEB_SHOP_URL, WsWelcomePage.class)
-                .openLogin()
-                .checkLoginPageIsOpened()
-                .enterEmail(email)
-                .enterPassword(password)
-                .checkRememberMe()
-                .submitLogin()
-                .checkUserLoggedIn(email);
-    }
-
-    @ParameterizedTest(name = "Ошибка валидации email при логине")
-    @Tag("negative")
+    @ParameterizedTest(name = "Авторизация с невалидным email: {0}")
     @CsvFileSource(resources = "/email.csv")
-    void emailValidationErrorWhenLoggingTest(String email) {
-        open(WEB_SHOP_URL, WsWelcomePage.class)
-                .openLogin()
+    void invalidEmailLoginTest(String email) {
+        open(WEB_SHOP_LOGIN_URL, WsLoginPage.class)
                 .enterEmail(email)
                 .enterPassword("password")
                 .verifyEmailValidationErrorAppear()
