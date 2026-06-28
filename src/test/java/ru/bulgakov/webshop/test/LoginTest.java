@@ -2,61 +2,58 @@ package ru.bulgakov.webshop.test;
 
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
-import ru.bulgakov.webshop.pages.WsLoginPage;
 import ru.bulgakov.webshop.pages.WsRegistrationPage;
 import ru.bulgakov.webshop.pages.WsWelcomePage;
 
 import static com.codeborne.selenide.Selenide.*;
-import static ru.bulgakov.webshop.config.Config.*;
+import static ru.bulgakov.webshop.config.Config.WEB_SHOP_REGISTRATION_URL;
+import static ru.bulgakov.webshop.config.Config.WEB_SHOP_URL;
 
-public class LoginTest extends TestBase {
+public class LoginTest {
     private static final Faker faker = new Faker();
     private String email;
     private String password;
 
-    @Nested
-    public class PositiveTests {
-        @BeforeEach
-        void beforeEach() {
-            password = faker.harryPotter().character() + faker.number().positive();
-            email = faker.internet().emailAddress();
+    @BeforeEach
+    void beforeEach() {
+        password = faker.harryPotter().character() + faker.number().positive();
+        email = faker.internet().emailAddress();
 
-            open(WEB_SHOP_REGISTRATION_URL, WsRegistrationPage.class)
-                    .register(
-                            faker.name().firstName(),
-                            faker.name().lastName(),
-                            email,
-                            password)
-                    .checkUserLoggedIn(email);
+        open(WEB_SHOP_REGISTRATION_URL, WsRegistrationPage.class)
+                .register(
+                    faker.name().firstName(),
+                    faker.name().lastName(),
+                    email,
+                    password)
+                .checkUserLoggedIn(email);
 
-            clearBrowserCookies();
-            clearBrowserLocalStorage();
-        }
-
-        @Test
-        void successLoginTest() {
-
-            open(WEB_SHOP_URL, WsWelcomePage.class)
-                    .openLogin()
-                    .checkLoginPageIsOpened()
-                    .enterEmail(email)
-                    .enterPassword(password)
-                    .checkRememberMe()
-                    .submitLogin()
-                    .checkUserLoggedIn(email);
-        }
+        clearBrowserCookies();
+        clearBrowserLocalStorage();
     }
 
-    @ParameterizedTest(name = "Авторизация с невалидным email: {0}")
+    @Test
+    void successLoginTest() {
+
+        open(WEB_SHOP_URL, WsWelcomePage.class)
+                .openLogin()
+                .checkLoginPageIsOpened()
+                .enterEmail(email)
+                .enterPassword(password)
+                .checkRememberMe()
+                .submitLogin()
+                .checkUserLoggedIn(email);
+    }
+
+    @ParameterizedTest
     @CsvFileSource(resources = "/email.csv")
     void invalidEmailLoginTest(String email) {
-        open(WEB_SHOP_LOGIN_URL, WsLoginPage.class)
+        open(WEB_SHOP_URL, WsWelcomePage.class)
+                .openLogin()
                 .enterEmail(email)
-                .enterPassword("password")
+                .enterPassword(password)
                 .verifyEmailValidationErrorAppear()
                 .submitLogin();
     }
