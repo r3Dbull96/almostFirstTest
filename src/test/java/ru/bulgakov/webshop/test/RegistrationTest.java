@@ -4,6 +4,7 @@ import io.qameta.allure.*;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -15,22 +16,23 @@ import ru.bulgakov.webshop.pages.WsWelcomePage;
 import java.util.stream.Stream;
 
 import static com.codeborne.selenide.Selenide.*;
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.SeverityLevel.CRITICAL;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static ru.bulgakov.webshop.config.Config.WEB_SHOP_URL;
 
+@Epic("Авторизация")
+@Feature("Регистрация")
+@Story("Регистрация нового пользователя")
 public class RegistrationTest extends TestBase {
     private static final Faker faker = new Faker();
 
     @Test
-    @Owner("g.kiselev")
-    @Tag("positive")
+    @Owner("george_kiselev")
+    @Tags({@Tag("positive"), @Tag("ws-site")})
     @Severity(CRITICAL)
-    @Epic("Авторизация")
-    @Feature("Регистрация")
-    @Story("Регистрация нового пользователя")
-    @Link("TASK-120")
+    @Link(name = "TASK-126", url = "https://task-126.com")
     @Issue("Bag-19")
     @DisplayName("Успешная регистрация нового пользователя")
     @Description("Создаем нового пользователя со случайными данными через интерфейс")
@@ -53,7 +55,10 @@ public class RegistrationTest extends TestBase {
     }
 
     @ParameterizedTest(name = "Ошибки валидации полей при регистрации")
-    @Tag("negative")
+    @Tags({@Tag("negative"), @Tag("ws-site")})
+    @Severity(CRITICAL)
+    @Owner("george_kiselev")
+    @Link(name = "TASK-127", url = "https://task-127.com")
     @MethodSource("getInvalidCredentialsProvider")
     void fieldsValidationErrorsDuringRegistrationTest(String email, String password, String confirmPassword) {
         WsRegistrationPage registrationPage = open(WEB_SHOP_URL, WsWelcomePage.class)
@@ -71,11 +76,13 @@ public class RegistrationTest extends TestBase {
         String expectedPasswordError = "The password should have at least 6 characters.";
         String expectedConfirmPasswordError = "The password and confirmation password do not match.";
 
-
         assertAll(
-                () -> assertEquals(expectedEmailError, registrationPage.getEmailError()),
-                () -> assertEquals(expectedPasswordError, registrationPage.getPasswordError()),
-                () -> assertEquals(expectedConfirmPasswordError, registrationPage.getConfirmPasswordError())
+                () -> step("Проверить ошибку валидации email", () ->
+                        assertEquals(expectedEmailError, registrationPage.getEmailError())),
+                () -> step("Проверить ошибку валидации пароля", () ->
+                        assertEquals(expectedPasswordError, registrationPage.getPasswordError())),
+                () -> step("Проверить ошибку валидации подтверждения пароля", () ->
+                        assertEquals(expectedConfirmPasswordError, registrationPage.getConfirmPasswordError()))
         );
     }
 

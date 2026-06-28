@@ -40,3 +40,15 @@ task positiveTest(type: Test) {
         includeTags 'positive'
     }
 }
+
+task negativeTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'negative'
+    }
+}
+
+task allWebShopTests(type: Test) {
+    useJUnitPlatform {
+        includeTags 'ws-site'
+    }
+}
