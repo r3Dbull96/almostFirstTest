@@ -15,7 +15,7 @@ public class Config {
 
     private static final WebDriverConfig config = ConfigFactory.create(WebDriverConfig.class, System.getProperties());
 
-    public static final WebDriverConfig getWebDriverConfig() {
+    public static WebDriverConfig getWebDriverConfig() {
         return config;
     }
 
