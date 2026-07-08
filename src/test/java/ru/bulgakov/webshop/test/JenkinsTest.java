@@ -16,7 +16,7 @@ public class JenkinsTest {
 
     @Test
     @DisplayName("UI positive")
-    @Tags({@Tag("UI negativeJenkins"), @Tag("negativeJenkins")})
+    @Tags({@Tag("UI"), @Tag("negativeJenkins")})
 
     void jenkinsTest2() {
         System.out.println("UI negativeJenkins test");
