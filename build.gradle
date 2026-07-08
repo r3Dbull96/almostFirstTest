@@ -43,7 +43,7 @@ tasks.register('positiveTest', Test) {
     }
 }
 
-tasks.register('jenkinsTest', Test) {
+tasks.register('jenkinsUiTest', Test) {
     useJUnitPlatform {
         def tag = System.getProperty("tag")
 
@@ -56,6 +56,7 @@ tasks.register('jenkinsTest', Test) {
         }
     }
     systemProperties(System.getProperties())
+    systemProperty "run", System.getProperty("run", "local")
 }
 
 tasks.register('jenkinsApiTest', Test) {
@@ -71,4 +72,5 @@ tasks.register('jenkinsApiTest', Test) {
         }
     }
     systemProperties(System.getProperties())
+    systemProperty "run", System.getProperty("run", "local")
 }

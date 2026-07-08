@@ -4,6 +4,7 @@ import io.qameta.allure.*;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -25,7 +26,7 @@ public class RegistrationTest extends TestBase {
 
     @Test
     @Owner("g.kiselev")
-    @Tag("positive")
+    @Tags({@Tag("UI"), @Tag("positive")})
     @Severity(CRITICAL)
     @Epic("Авторизация")
     @Feature("Регистрация")
@@ -53,7 +54,7 @@ public class RegistrationTest extends TestBase {
     }
 
     @ParameterizedTest(name = "Ошибки валидации полей при регистрации")
-    @Tag("negative")
+    @Tags({@Tag("UI"), @Tag("negative")})
     @MethodSource("getInvalidCredentialsProvider")
     void fieldsValidationErrorsDuringRegistrationTest(String email, String password, String confirmPassword) {
         WsRegistrationPage registrationPage = open(WEB_SHOP_URL, WsWelcomePage.class)

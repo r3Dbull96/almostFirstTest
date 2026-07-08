@@ -38,6 +38,7 @@ public class LoginTest extends TestBase {
         }
 
         @Test
+        @Tags({@Tag("UI"), @Tag("positive")})
         void successLoginTest() {
 
             open(WEB_SHOP_URL, WsWelcomePage.class)
@@ -52,7 +53,7 @@ public class LoginTest extends TestBase {
     }
 
     @ParameterizedTest(name = "Ошибка валидации email при логине, email = {0}")
-    @Tag("negative")
+    @Tags({@Tag("UI"), @Tag("negative")})
     @CsvFileSource(resources = "/email.csv")
     void emailValidationErrorWhenLoggingTest(String email) {
         open(WEB_SHOP_LOGIN_URL, WsLoginPage.class)
