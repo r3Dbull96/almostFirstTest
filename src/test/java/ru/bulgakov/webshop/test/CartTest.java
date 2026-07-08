@@ -1,6 +1,5 @@
 package ru.bulgakov.webshop.test;
 
-import com.codeborne.selenide.Configuration;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,6 @@ import static com.codeborne.selenide.Selenide.*;
 import static java.util.Locale.US;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static ru.bulgakov.webshop.config.Config.TIMEOUT_MS;
 import static ru.bulgakov.webshop.config.Config.WEB_SHOP_URL;
 
 public class CartTest extends TestBase {
@@ -25,7 +23,6 @@ public class CartTest extends TestBase {
 
     @BeforeEach
     void beforeEach() {
-        Configuration.timeout = TIMEOUT_MS;
         authSteps.registerNewUser();
     }
 

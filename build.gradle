@@ -29,13 +29,15 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testImplementation 'com.codeborne:selenide:7.16.2'
     testImplementation 'net.datafaker:datafaker:2.6.0'
+    testImplementation 'org.aeonbits.owner:owner:1.0.12'
 }
 
 test {
     useJUnitPlatform()
+    systemProperty "run", System.getProperty("run", "local")
 }
 
-task positiveTest(type: Test) {
+tasks.register('positiveTest', Test) {
     useJUnitPlatform {
         includeTags 'positive'
     }
