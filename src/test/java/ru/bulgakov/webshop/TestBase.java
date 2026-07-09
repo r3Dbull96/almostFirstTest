@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.UsernameAndPassword;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.http.ClientConfig;
 import ru.bulgakov.webshop.config.WebDriverConfig;
@@ -50,6 +51,14 @@ public class TestBase {
                 .authenticateAs(new UsernameAndPassword(config.selenoidUser(), config.selenoidPassword()))
                 .connectionTimeout(Duration.ofSeconds(30))
                 .readTimeout(Duration.ofMinutes(2));
+
+        ChromeOptions options = getSelenoidChromeOptions();
+
+        System.out.println("Remote URL = " + config.selenoidUrl());
+        System.out.println("Run mode = " + config.run());
+        System.out.println("Browser = " + config.browser());
+        System.out.println("Capabilities = " + options.asMap());
+
 
         WebDriver driver = RemoteWebDriver.builder()
                 .address(URI.create(config.selenoidUrl()))
