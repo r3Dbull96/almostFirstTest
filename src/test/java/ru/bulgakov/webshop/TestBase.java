@@ -29,11 +29,6 @@ public class TestBase {
     static void globalSetUp() {
         SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
 
-        System.out.println("System run = " + System.getProperty("run"));
-        System.out.println("config.run = " + config.run());
-        System.out.println("config.browser = " + config.browser());
-        System.out.println("config.browserSize = " + config.browserSize());
-        System.out.println("config.selenoidUrl = " + config.selenoidUrl());
 
         Configuration.browserSize = config.browserSize();
         Configuration.browser = config.browser();
@@ -50,6 +45,8 @@ public class TestBase {
                 .authenticateAs(new UsernameAndPassword(config.selenoidUser(), config.selenoidPassword()))
                 .connectionTimeout(Duration.ofSeconds(30))
                 .readTimeout(Duration.ofMinutes(2));
+
+
 
         WebDriver driver = RemoteWebDriver.builder()
                 .address(URI.create(config.selenoidUrl()))

@@ -42,3 +42,35 @@ tasks.register('positiveTest', Test) {
         includeTags 'positive'
     }
 }
+
+tasks.register('jenkinsUiTest', Test) {
+    useJUnitPlatform {
+        def tag = System.getProperty("tag")
+
+        //если тег указан - запускаем ui+ тег-тесты
+        //если тег НЕ указан - только ui
+        if (tag != null && !tag.isBlank()) {
+            includeTags("UI & ${tag}")
+        } else {
+            includeTags("UI")
+        }
+    }
+    systemProperties(System.getProperties())
+    systemProperty "run", System.getProperty("run", "local")
+}
+
+tasks.register('jenkinsApiTest', Test) {
+    useJUnitPlatform {
+        def tag = System.getProperty("tag")
+
+        //если тег указан - запускаем ui+ тег-тесты
+        //если тег НЕ указан - только ui
+        if (tag != null && !tag.isBlank()) {
+            includeTags("API & ${tag}")
+        } else {
+            includeTags("API")
+        }
+    }
+    systemProperties(System.getProperties())
+    systemProperty "run", System.getProperty("run", "local")
+}

@@ -1,10 +1,7 @@
 package ru.bulgakov.webshop.test;
 
 import net.datafaker.Faker;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import ru.bulgakov.webshop.TestBase;
 import ru.bulgakov.webshop.pages.CartPage;
 import ru.bulgakov.webshop.pages.ProductPage;
@@ -27,7 +24,7 @@ public class CartTest extends TestBase {
     }
 
     @Test
-    @Tag("positive")
+    @Tags({@Tag("UI"), @Tag("positive")})
     @DisplayName("Добавление товаров в корзину")
     void addItemsToCartTest() {
         int processorIndex = 0; // 0 = slow, 1 = medium, 2 = fast
