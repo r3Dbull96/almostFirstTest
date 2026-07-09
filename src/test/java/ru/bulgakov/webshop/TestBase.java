@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.UsernameAndPassword;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.http.ClientConfig;
 import ru.bulgakov.webshop.config.WebDriverConfig;
@@ -30,11 +29,6 @@ public class TestBase {
     static void globalSetUp() {
         SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
 
-        System.out.println("System run = " + System.getProperty("run"));
-        System.out.println("config.run = " + config.run());
-        System.out.println("config.browser = " + config.browser());
-        System.out.println("config.browserSize = " + config.browserSize());
-        System.out.println("config.selenoidUrl = " + config.selenoidUrl());
 
         Configuration.browserSize = config.browserSize();
         Configuration.browser = config.browser();
@@ -46,13 +40,6 @@ public class TestBase {
         if (!"remote".equals(config.run())) {
             return;
         }
-
-        ChromeOptions options = getSelenoidChromeOptions();
-
-        System.out.println("Remote URL = " + config.selenoidUrl());
-        System.out.println("Run mode = " + config.run());
-        System.out.println("Browser = " + config.browser());
-        System.out.println("Capabilities = " + options.asMap());
 
         ClientConfig clientConfig = ClientConfig.defaultConfig()
                 .authenticateAs(new UsernameAndPassword(config.selenoidUser(), config.selenoidPassword()))
