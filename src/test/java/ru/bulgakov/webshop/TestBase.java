@@ -47,17 +47,18 @@ public class TestBase {
             return;
         }
 
-        ClientConfig clientConfig = ClientConfig.defaultConfig()
-                .authenticateAs(new UsernameAndPassword(config.selenoidUser(), config.selenoidPassword()))
-                .connectionTimeout(Duration.ofSeconds(30))
-                .readTimeout(Duration.ofMinutes(2));
-
         ChromeOptions options = getSelenoidChromeOptions();
 
         System.out.println("Remote URL = " + config.selenoidUrl());
         System.out.println("Run mode = " + config.run());
         System.out.println("Browser = " + config.browser());
         System.out.println("Capabilities = " + options.asMap());
+
+        ClientConfig clientConfig = ClientConfig.defaultConfig()
+                .authenticateAs(new UsernameAndPassword(config.selenoidUser(), config.selenoidPassword()))
+                .connectionTimeout(Duration.ofSeconds(30))
+                .readTimeout(Duration.ofMinutes(2));
+
 
 
         WebDriver driver = RemoteWebDriver.builder()
