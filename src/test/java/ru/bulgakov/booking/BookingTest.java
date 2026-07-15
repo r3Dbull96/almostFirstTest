@@ -51,7 +51,7 @@ public class BookingTest {
      *   успешное бронирование с отрицательной ценой, датой в невалидном формате, дата выезда раньше даты заезда - ожидается 400
      */
     @ParameterizedTest(name = "Ошибки валидации полей при авторизации")
-    @MethodSource("getInvalidCredentials=")
+    @MethodSource("getInvalidCredentials")
     void errorAuthWithInvalidCredentialsTest(String user, String password) {
         AuthErrorResponse response = given()
                 .contentType(ContentType.JSON)
