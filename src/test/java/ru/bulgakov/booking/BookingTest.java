@@ -184,7 +184,7 @@ public class BookingTest {
         assertThat(response.getBooking().getTotalprice()).isEqualTo(request.getTotalprice());
         assertThat(response.getBooking().getBookingdates().getCheckin()).isEqualTo(request.getBookingdates().getCheckin());
         assertThat(response.getBooking().getBookingdates().getCheckout()).isEqualTo(request.getBookingdates().getCheckout());
-        assertThat(response.getBooking().getDepositpaid()).isTrue();
+        assertThat(response.getBooking().getDepositpaid()).isEqualTo(request.getDepositpaid());
         assertThat(response.getBooking().getAdditionalneeds()).isEqualTo(request.getAdditionalneeds());
     }
 
@@ -206,7 +206,7 @@ public class BookingTest {
         assertThat(response.getBooking().getTotalprice()).isEqualTo(request.getTotalprice());
         assertThat(response.getBooking().getBookingdates().getCheckin()).isEqualTo("0NaN-aN-aN");
         assertThat(response.getBooking().getBookingdates().getCheckout()).isEqualTo("0NaN-aN-aN");
-        assertThat(response.getBooking().getDepositpaid()).isTrue();
+        assertThat(response.getBooking().getDepositpaid()).isEqualTo(request.getDepositpaid());
         assertThat(response.getBooking().getAdditionalneeds()).isEqualTo(request.getAdditionalneeds());
     }
 
