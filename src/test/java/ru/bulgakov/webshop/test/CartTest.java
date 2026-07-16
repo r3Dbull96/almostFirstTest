@@ -1,5 +1,9 @@
 package ru.bulgakov.webshop.test;
 
+import com.codeborne.selenide.Configuration;
+import io.qameta.allure.Link;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.*;
 import ru.bulgakov.webshop.TestBase;
@@ -9,6 +13,8 @@ import ru.bulgakov.webshop.pages.WsWelcomePage;
 import ru.bulgakov.webshop.steps.AuthSteps;
 
 import static com.codeborne.selenide.Selenide.*;
+import static io.qameta.allure.Allure.step;
+import static io.qameta.allure.SeverityLevel.CRITICAL;
 import static java.util.Locale.US;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +30,10 @@ public class CartTest extends TestBase {
     }
 
     @Test
-    @Tags({@Tag("UI"), @Tag("positive")})
+    @Tags({@Tag("positive"), @Tag("ws-site")})
+    @Severity(CRITICAL)
+    @Owner("george_kiselev")
+    @Link(name = "TASK-123", url = "https://task-123.com")
     @DisplayName("Добавление товаров в корзину")
     void addItemsToCartTest() {
         int processorIndex = 0; // 0 = slow, 1 = medium, 2 = fast
@@ -50,9 +59,12 @@ public class CartTest extends TestBase {
                 (Float.parseFloat(expectedProductPrice) + processorPrice) * Float.parseFloat(quantity));
 
         assertAll(
-                () -> assertEquals(expectedProductName, cartPage.getProductName()),
-                () -> assertEquals(expectedTotal, cartPage.getTotalPrice()),
-                () -> assertEquals(quantity, cartPage.getProductQuantity())
+                () -> step("Проверить название товара", () ->
+                        assertEquals(expectedProductName, cartPage.getProductName())),
+                () -> step("Проверить итоговую цену товаров", () ->
+                        assertEquals(expectedTotal, cartPage.getTotalPrice())),
+                () -> step("Проверить количество товаров", () ->
+                        assertEquals(quantity, cartPage.getProductQuantity()))
         );
     }
 

@@ -1,5 +1,8 @@
 package ru.bulgakov.webshop.test;
 
+import io.qameta.allure.Link;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,6 +13,7 @@ import ru.bulgakov.webshop.pages.WsRegistrationPage;
 import ru.bulgakov.webshop.pages.WsWelcomePage;
 
 import static com.codeborne.selenide.Selenide.*;
+import static io.qameta.allure.SeverityLevel.CRITICAL;
 import static ru.bulgakov.webshop.config.Config.*;
 
 public class LoginTest extends TestBase {
@@ -38,9 +42,12 @@ public class LoginTest extends TestBase {
         }
 
         @Test
-        @Tags({@Tag("UI"), @Tag("positive")})
+        @Tags({@Tag("positive"), @Tag("ws-site")})
+        @Severity(CRITICAL)
+        @Owner("george_kiselev")
+        @Link(name = "TASK-124", url = "https://task-124.com")
+        @DisplayName("Успешный логин под новым пользователем")
         void successLoginTest() {
-
             open(WEB_SHOP_URL, WsWelcomePage.class)
                     .openLogin()
                     .checkLoginPageIsOpened()
@@ -53,13 +60,17 @@ public class LoginTest extends TestBase {
     }
 
     @ParameterizedTest(name = "Ошибка валидации email при логине, email = {0}")
-    @Tags({@Tag("UI"), @Tag("negative")})
+    @Tags({@Tag("negative"), @Tag("ws-site")})
+    @Owner("george_kiselev")
+    @Link(name = "TASK-125", url = "https://task-125.com")
     @CsvFileSource(resources = "/email.csv")
     void emailValidationErrorWhenLoggingTest(String email) {
+        password = faker.harryPotter().character() + faker.number().positive();
+
         open(WEB_SHOP_LOGIN_URL, WsLoginPage.class)
                 .enterEmail(email)
                 .enterPassword(password)
-                .verifyEmailValidationErrorAppear()
-                .submitLogin();
+                .submitLogin()
+                .verifyEmailValidationErrorAppear();
     }
 }
