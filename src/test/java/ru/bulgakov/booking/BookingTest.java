@@ -5,6 +5,8 @@ import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BookingTest {
     private static final String BOOKING_URL = "https://restful-booker.herokuapp.com";
+    private static final Faker faker = new Faker();
+    private static final String USER = "admin", PASSWORD = "password123";
+
+    private final BookingApiClient bookingApiClient = new BookingApiClient();
 
     @BeforeAll
     static void setUp() {
@@ -29,19 +35,10 @@ public class BookingTest {
 
     @Test
     void authTest() {
-        String user = "admin";
-        String password = "password123";
+        Response response = bookingApiClient.auth(USER, PASSWORD);
 
-        AuthResponse response = given()
-                .contentType(ContentType.JSON)
-                .body(new AuthRequest(user, password))
-                .when()
-                .post(BOOKING_URL + "/auth")
-                .then()
-                .statusCode(200)
-                .extract().as(AuthResponse.class);
-
-        assertThat(response.getToken()).isNotNull();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.as(AuthResponse.class).getToken()).isNotNull();
     }
 
     /*
@@ -105,51 +102,50 @@ public class BookingTest {
 
     @Test
     void createBookingTest() {
-        CreateBookingResponse response = given()
-                .contentType(ContentType.JSON)
-                .body(buildBookingRequest())
-                .post(BOOKING_URL + "/booking")
-                .then()
-                .statusCode(200)
-                .extract().as(CreateBookingResponse.class);
+        Response response = bookingApiClient.createBooking(buildBookingRequest());
+        assertThat(response.getStatusCode()).isEqualTo(200);
 
-        assertThat(response.getBookingid()).isNotNull();
-        assertThat(response.getBooking().getTotalprice()).isEqualTo(1000);
-        assertThat(response.getBooking().getBookingdates().getCheckin()).isEqualTo("2026-01-01");
-        assertThat(response.getBooking().getDepositpaid()).isTrue();
+        CreateBookingResponse createBookingResponse = response.as(CreateBookingResponse.class);
+        assertThat(createBookingResponse.getBookingid()).isNotNull();
+        assertThat(createBookingResponse.getBooking().getTotalprice()).isEqualTo(1000);
+        assertThat(createBookingResponse.getBooking().getBookingdates().getCheckin()).isEqualTo("2026-01-01");
+        assertThat(createBookingResponse.getBooking().getDepositpaid()).isTrue();
     }
 
-    private static CreateBookingDTO bookingRequest() {
-        CreateBookingDTO booking = new CreateBookingDTO();
-
-        booking.setFirstname("Ivan");
-        booking.setLastname("Dorn");
-        booking.setTotalprice(1000);
-        booking.setDepositpaid(true);
-        booking.setBookingdates(new CreateBookingDTO.BookingDates("2026-01-01", "2027-01-01"));
-        booking.setAdditionalneeds("newspaper");
-
-        return booking;
-    }
-
-    private static CreateBookingDTO buildBookingRequest() {
-        return CreateBookingDTO.builder()
-                .firstname("Ivan")
-                .lastname("Dorn")
-                .totalprice(1000)
-                .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+    private static BookingDTO buildBookingRequest() {
+        return BookingDTO.builder()
+                .firstname(faker.name().firstName())
+                .lastname(faker.name().lastName())
+                .totalprice(faker.number().numberBetween(1000, 10000))
+                .depositpaid(faker.bool().bool())
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("2026-01-01")
                         .checkout("2027-01-01")
                         .build())
-                .additionalneeds("newspaper")
+                .additionalneeds(faker.videoGame().title())
                 .build();
+    }
+
+    @Test
+    void updateBookingTest() {
+        Response createResp = bookingApiClient.createBooking(buildBookingRequest());
+        assertThat(createResp.getStatusCode()).isEqualTo(200);
+
+        BookingDTO bookingDTO = buildBookingRequest();
+
+        Response updateResponse = bookingApiClient
+                .updateBooking(bookingDTO, createResp.as(CreateBookingResponse.class).getBookingid());
+        assertThat(updateResponse.getStatusCode()).isEqualTo(200);
+
+        BookingDTO updatedBookingDTO = updateResponse.as(BookingDTO.class);
+
+        assertThat(updatedBookingDTO.equals(bookingDTO)).isTrue();
     }
 
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("getBookingRequestsWithoutReqFields")
-    void errorCreateBookingWithMissingRequiredFieldsTest(String testName, CreateBookingDTO request) {
+    void errorCreateBookingWithMissingRequiredFieldsTest(String testName, BookingDTO request) {
         String responseError = given()
                 .contentType(ContentType.JSON)
                 .body(request)
@@ -171,7 +167,7 @@ public class BookingTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("getBookingRequestsWithInvalidFields")
-    void createBookingWithInvalidFieldsTest(String testName, CreateBookingDTO request) {
+    void createBookingWithInvalidFieldsTest(String testName, BookingDTO request) {
         CreateBookingResponse response = given()
                 .contentType(ContentType.JSON)
                 .body(request)
@@ -192,7 +188,7 @@ public class BookingTest {
     @Test
     @DisplayName("Успешное создание бронирования с датами в невалидном формате")
     void createBookingWithInvalidDatesTest() {
-        CreateBookingDTO request = buildBookingRequestWithInvalidDates();
+        BookingDTO request = buildBookingRequestWithInvalidDates();
 
         CreateBookingResponse response = given()
                 .contentType(ContentType.JSON)
@@ -229,15 +225,15 @@ public class BookingTest {
         return Stream.of(
                 Arguments.of("Успешное создание бронирования с отрицательной ценой", buildBookingRequestWithNegativeTotalPrice()),
                 Arguments.of("Успешное создание бронирования с датой выезда раньше даты заезда", buildBookingRequestWithInvalidDatePeriod())
-                );
+        );
     }
 
-    private static CreateBookingDTO buildBookingRequestWithoutFirstname() {
-        return CreateBookingDTO.builder()
+    private static BookingDTO buildBookingRequestWithoutFirstname() {
+        return BookingDTO.builder()
                 .lastname("Dorn")
                 .totalprice(1000)
                 .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("2026-01-01")
                         .checkout("2027-01-01")
                         .build())
@@ -245,12 +241,12 @@ public class BookingTest {
                 .build();
     }
 
-    private static CreateBookingDTO buildBookingRequestWithoutLastname() {
-        return CreateBookingDTO.builder()
+    private static BookingDTO buildBookingRequestWithoutLastname() {
+        return BookingDTO.builder()
                 .firstname("Ivan")
                 .totalprice(1000)
                 .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("2026-01-01")
                         .checkout("2027-01-01")
                         .build())
@@ -259,13 +255,13 @@ public class BookingTest {
     }
 
 
-    private static CreateBookingDTO buildBookingRequestWithNegativeTotalPrice() {
-        return CreateBookingDTO.builder()
+    private static BookingDTO buildBookingRequestWithNegativeTotalPrice() {
+        return BookingDTO.builder()
                 .firstname("Ivan")
                 .lastname("Dorn")
                 .totalprice(-500)
                 .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("2026-01-01")
                         .checkout("2027-01-01")
                         .build())
@@ -273,13 +269,13 @@ public class BookingTest {
                 .build();
     }
 
-    private static CreateBookingDTO buildBookingRequestWithInvalidDates() {
-        return CreateBookingDTO.builder()
+    private static BookingDTO buildBookingRequestWithInvalidDates() {
+        return BookingDTO.builder()
                 .firstname("Ivan")
                 .lastname("Dorn")
                 .totalprice(1000)
                 .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("третье сентября")
                         .checkout("третье сентября")
                         .build())
@@ -287,13 +283,13 @@ public class BookingTest {
                 .build();
     }
 
-    private static CreateBookingDTO buildBookingRequestWithInvalidDatePeriod() {
-        return CreateBookingDTO.builder()
+    private static BookingDTO buildBookingRequestWithInvalidDatePeriod() {
+        return BookingDTO.builder()
                 .firstname("Ivan")
                 .lastname("Dorn")
                 .totalprice(1000)
                 .depositpaid(true)
-                .bookingdates(CreateBookingDTO.BookingDates.builder()
+                .bookingdates(BookingDTO.BookingDates.builder()
                         .checkin("2027-01-01")
                         .checkout("2026-01-01")
                         .build())

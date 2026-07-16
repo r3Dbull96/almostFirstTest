@@ -1,17 +1,17 @@
 package ru.bulgakov.booking.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CreateBookingDTO {
+public class BookingDTO {
     private String firstname;
     private String lastname;
     private Integer totalprice;
