@@ -1,41 +1,38 @@
 package ru.bulgakov.booking;
 
-import io.qameta.allure.restassured.AllureRestAssured;
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import net.datafaker.Faker;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import ru.bulgakov.booking.dto.*;
+import ru.bulgakov.booking.config.BookingConfig;
+import ru.bulgakov.booking.dto.AuthErrorResponse;
+import ru.bulgakov.booking.dto.AuthResponse;
+import ru.bulgakov.booking.dto.BookingDTO;
+import ru.bulgakov.booking.dto.CreateBookingResponse;
+import ru.bulgakov.booking.steps.BookingSteps;
 
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static ru.bulgakov.booking.config.BookingApiConfig.getBookingConfig;
+import static ru.bulgakov.booking.steps.BookingSteps.buildBookingRequest;
 
-public class BookingTest {
-    private static final String BOOKING_URL = "https://restful-booker.herokuapp.com";
+public class BookingTest extends BaseApiTest {
     private static final Faker faker = new Faker();
-    private static final String USER = "admin", PASSWORD = "password123";
-
+    private static final BookingConfig CFG = getBookingConfig();
     private final BookingApiClient bookingApiClient = new BookingApiClient();
 
-    @BeforeAll
-    static void setUp() {
-        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
-        RestAssured.filters(new AllureRestAssured());
-    }
-
     @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Авторизация пользователя")
     void authTest() {
-        Response response = bookingApiClient.auth(USER, PASSWORD);
+        Response response = bookingApiClient.auth(CFG.username(), CFG.password());
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.as(AuthResponse.class).getToken()).isNotNull();
@@ -48,85 +45,69 @@ public class BookingTest {
      *   успешное бронирование с отрицательной ценой, датой в невалидном формате, дата выезда раньше даты заезда - ожидается 400
      */
     @ParameterizedTest(name = "Ошибки валидации полей при авторизации")
+    @Tags({@Tag("parameterized"), @Tag("api"), @Tag("negative")})
     @MethodSource("getInvalidCredentials")
     void errorAuthWithInvalidCredentialsTest(String user, String password) {
-        AuthErrorResponse response = given()
-                .contentType(ContentType.JSON)
-                .body(new AuthRequest(user, password))
-                .when()
-                .post(BOOKING_URL + "/auth")
-                .then()
-                .statusCode(200)
-                .extract().as(AuthErrorResponse.class);
+        Response response = bookingApiClient.auth(user, password);
+        assertThat(response.getStatusCode()).isEqualTo(200);
 
-        assertThat(response.getReason()).isEqualTo("Bad credentials");
-    }
-
-    static Stream<Arguments> getInvalidCredentials() {
-        return Stream.of(
-                Arguments.of("admin", "pswd"),
-                Arguments.of("admin@gmail.com", "password123"),
-                Arguments.of("admin", ""),
-                Arguments.of("", "password123")
-        );
+        assertThat(response.as(AuthErrorResponse.class).getReason()).isEqualTo("Bad credentials");
     }
 
     @Test
+    @Tags({@Tag("api"), @Tag("negative")})
     @DisplayName("Ошибка при авторизации без тела запроса")
     void errorAuthWithoutRequestBodyTest() {
-        AuthErrorResponse response = given()
-                .contentType(ContentType.JSON)
-                .when()
-                .post(BOOKING_URL + "/auth")
-                .then()
-                .statusCode(200)
-                .extract().as(AuthErrorResponse.class);
+        Response response = bookingApiClient.authWithoutBody();
+        assertThat(response.getStatusCode()).isEqualTo(200);
 
-        assertThat(response.getReason()).isEqualTo("Bad credentials");
+        assertThat(response.as(AuthErrorResponse.class).getReason()).isEqualTo("Bad credentials");
     }
 
     @Test
+    @Tags({@Tag("api"), @Tag("negative")})
     @DisplayName("Ошибка при авторизации c пустым телом запроса")
     void errorAuthWithEmptyRequestBodyTest() {
-        AuthErrorResponse response = given()
-                .contentType(ContentType.JSON)
-                .body("{}")
-                .when()
-                .post(BOOKING_URL + "/auth")
-                .then()
-                .statusCode(200)
-                .extract().as(AuthErrorResponse.class);
+        Response response = bookingApiClient.authWithEmptyBody();
+        assertThat(response.getStatusCode()).isEqualTo(200);
 
-        assertThat(response.getReason()).isEqualTo("Bad credentials");
+        assertThat(response.as(AuthErrorResponse.class).getReason()).isEqualTo("Bad credentials");
     }
 
     @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Создание бронирования")
     void createBookingTest() {
-        Response response = bookingApiClient.createBooking(buildBookingRequest());
+        BookingDTO bookingDTO = buildBookingRequest();
+        Response response = bookingApiClient.createBooking(bookingDTO);
         assertThat(response.getStatusCode()).isEqualTo(200);
 
         CreateBookingResponse createBookingResponse = response.as(CreateBookingResponse.class);
-        assertThat(createBookingResponse.getBookingid()).isNotNull();
-        assertThat(createBookingResponse.getBooking().getTotalprice()).isEqualTo(1000);
-        assertThat(createBookingResponse.getBooking().getBookingdates().getCheckin()).isEqualTo("2026-01-01");
-        assertThat(createBookingResponse.getBooking().getDepositpaid()).isTrue();
-    }
+        assertThat(createBookingResponse).isNotNull();
 
-    private static BookingDTO buildBookingRequest() {
-        return BookingDTO.builder()
-                .firstname(faker.name().firstName())
-                .lastname(faker.name().lastName())
-                .totalprice(faker.number().numberBetween(1000, 10000))
-                .depositpaid(faker.bool().bool())
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("2026-01-01")
-                        .checkout("2027-01-01")
-                        .build())
-                .additionalneeds(faker.videoGame().title())
-                .build();
+        BookingSteps.bookingShouldBeEqual(bookingDTO, createBookingResponse.getBooking());
     }
 
     @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Получение бронирования по id")
+    void getBookingTest() {
+        BookingDTO bookingDTO = buildBookingRequest();
+        Response createResponse = bookingApiClient.createBooking(bookingDTO);
+        assertThat(createResponse.getStatusCode()).isEqualTo(200);
+
+        CreateBookingResponse createBookingResponse = createResponse.as(CreateBookingResponse.class);
+
+        Response getResponse = bookingApiClient.getBooking(createBookingResponse.getBookingid());
+        assertThat(getResponse.getStatusCode()).isEqualTo(200);
+
+
+        BookingSteps.bookingShouldBeEqual(createBookingResponse.getBooking(), getResponse.as(BookingDTO.class));
+    }
+
+    @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Полное обновление бронирования")
     void updateBookingTest() {
         Response createResp = bookingApiClient.createBooking(buildBookingRequest());
         assertThat(createResp.getStatusCode()).isEqualTo(200);
@@ -139,161 +120,122 @@ public class BookingTest {
 
         BookingDTO updatedBookingDTO = updateResponse.as(BookingDTO.class);
 
-        assertThat(updatedBookingDTO.equals(bookingDTO)).isTrue();
+        BookingSteps.bookingShouldBeEqual(bookingDTO, updatedBookingDTO);
     }
 
+    @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Частичное обновление бронирования")
+    void partialUpdateBookingTest() {
+        Response createResp = bookingApiClient.createBooking(buildBookingRequest());
+        assertThat(createResp.getStatusCode()).isEqualTo(200);
+
+        BookingDTO bookingDTO = new BookingDTO(
+                faker.football().players(),
+                faker.number().numberBetween(10001, 12000),
+                "2026-02-01");
+
+        Response updateResponse = bookingApiClient
+                .partialUpdateBooking(bookingDTO, createResp.as(CreateBookingResponse.class).getBookingid());
+        assertThat(updateResponse.getStatusCode()).isEqualTo(200);
+
+        BookingDTO updatedBookingDTO = updateResponse.as(BookingDTO.class);
+
+        assertAll(
+                () -> assertThat(bookingDTO.getFirstname())
+                        .isEqualTo(updatedBookingDTO.getFirstname()),
+                () -> assertThat(bookingDTO.getTotalprice())
+                        .isEqualTo(updatedBookingDTO.getTotalprice()),
+                () -> assertThat(bookingDTO.getBookingdates().getCheckin())
+                        .isEqualTo(updatedBookingDTO.getBookingdates().getCheckin())
+        );
+    }
+
+    @Test
+    @Tags({@Tag("api"), @Tag("positive")})
+    @DisplayName("Удаление бронирования")
+    void deleteBookingTest() {
+        Integer bookingId = bookingApiClient
+                .createBooking(buildBookingRequest()).as(CreateBookingResponse.class).getBookingid();
+
+        Response deleteResp = bookingApiClient.deleteBooking(bookingId);
+        assertThat(deleteResp.getStatusCode()).isEqualTo(201);
+
+        Response getResp = bookingApiClient.getBooking(bookingId);
+        assertThat(getResp.getStatusCode()).isEqualTo(404);
+    }
 
     @ParameterizedTest(name = "{0}")
+    @Tags({@Tag("parameterized"), @Tag("api"), @Tag("negative")})
     @MethodSource("getBookingRequestsWithoutReqFields")
     void errorCreateBookingWithMissingRequiredFieldsTest(String testName, BookingDTO request) {
-        String responseError = given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .post(BOOKING_URL + "/booking")
-                .then()
-                .statusCode(500)
-                .extract().asString();
+        Response errorResponse = bookingApiClient.createBooking(request);
+        assertThat(errorResponse.getStatusCode()).isEqualTo(500);
 
-        assertThat(responseError).isEqualTo("Internal Server Error");
+        String errorText = errorResponse.getBody().asString();
+        assertThat(errorText).isEqualTo("Internal Server Error");
     }
-
 
     static Stream<Arguments> getBookingRequestsWithoutReqFields() {
         return Stream.of(
-                Arguments.of("Ошибка при создании бронирования без firstname", buildBookingRequestWithoutFirstname()),
-                Arguments.of("Ошибка при создании бронирования без lastname", buildBookingRequestWithoutLastname())
+                Arguments.of("Ошибка при создании бронирования без firstname", BookingSteps.buildBookingRequestWithoutFirstname()),
+                Arguments.of("Ошибка при создании бронирования без lastname", BookingSteps.buildBookingRequestWithoutLastname())
         );
     }
 
     @ParameterizedTest(name = "{0}")
+    @Tags({@Tag("parameterized"), @Tag("api"), @Tag("negative")})
     @MethodSource("getBookingRequestsWithInvalidFields")
     void createBookingWithInvalidFieldsTest(String testName, BookingDTO request) {
-        CreateBookingResponse response = given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .post(BOOKING_URL + "/booking")
-                .then()
-                .statusCode(200)
-                .extract().as(CreateBookingResponse.class);
+        Response response = bookingApiClient.createBooking(request);
+        assertThat(response.getStatusCode()).isEqualTo(200);
 
-        assertThat(response.getBookingid()).isNotNull();
-        assertThat(response.getBooking().getTotalprice()).isEqualTo(request.getTotalprice());
-        assertThat(response.getBooking().getBookingdates().getCheckin()).isEqualTo(request.getBookingdates().getCheckin());
-        assertThat(response.getBooking().getBookingdates().getCheckout()).isEqualTo(request.getBookingdates().getCheckout());
-        assertThat(response.getBooking().getDepositpaid()).isEqualTo(request.getDepositpaid());
-        assertThat(response.getBooking().getAdditionalneeds()).isEqualTo(request.getAdditionalneeds());
-    }
+        CreateBookingResponse createBookingResponse = response.as(CreateBookingResponse.class);
 
-
-    @Test
-    @DisplayName("Успешное создание бронирования с датами в невалидном формате")
-    void createBookingWithInvalidDatesTest() {
-        BookingDTO request = buildBookingRequestWithInvalidDates();
-
-        CreateBookingResponse response = given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .post(BOOKING_URL + "/booking")
-                .then()
-                .statusCode(200)
-                .extract().as(CreateBookingResponse.class);
-
-        assertThat(response.getBookingid()).isNotNull();
-        assertThat(response.getBooking().getTotalprice()).isEqualTo(request.getTotalprice());
-        assertThat(response.getBooking().getBookingdates().getCheckin()).isEqualTo("0NaN-aN-aN");
-        assertThat(response.getBooking().getBookingdates().getCheckout()).isEqualTo("0NaN-aN-aN");
-        assertThat(response.getBooking().getDepositpaid()).isEqualTo(request.getDepositpaid());
-        assertThat(response.getBooking().getAdditionalneeds()).isEqualTo(request.getAdditionalneeds());
-    }
-
-
-    @Test
-    @DisplayName("Ошибка при создании бронирования с пустым телом запроса")
-    void errorCreateBookingWithEmptyReqBodyTest() {
-        String responseError = given()
-                .contentType(ContentType.JSON)
-                .body("{}")
-                .post(BOOKING_URL + "/booking")
-                .then()
-                .statusCode(500)
-                .extract().asString();
-
-        assertThat(responseError).isEqualTo("Internal Server Error");
+        BookingSteps.bookingShouldBeEqual(request, createBookingResponse.getBooking());
     }
 
     static Stream<Arguments> getBookingRequestsWithInvalidFields() {
         return Stream.of(
-                Arguments.of("Успешное создание бронирования с отрицательной ценой", buildBookingRequestWithNegativeTotalPrice()),
-                Arguments.of("Успешное создание бронирования с датой выезда раньше даты заезда", buildBookingRequestWithInvalidDatePeriod())
+                Arguments.of("Успешное создание бронирования с отрицательной ценой", BookingSteps.buildBookingRequestWithNegativeTotalPrice()),
+                Arguments.of("Успешное создание бронирования с датой выезда раньше даты заезда", BookingSteps.buildBookingRequestWithInvalidDatePeriod())
         );
     }
 
-    private static BookingDTO buildBookingRequestWithoutFirstname() {
-        return BookingDTO.builder()
-                .lastname("Dorn")
-                .totalprice(1000)
-                .depositpaid(true)
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("2026-01-01")
-                        .checkout("2027-01-01")
-                        .build())
-                .additionalneeds("newspaper")
-                .build();
-    }
 
-    private static BookingDTO buildBookingRequestWithoutLastname() {
-        return BookingDTO.builder()
-                .firstname("Ivan")
-                .totalprice(1000)
-                .depositpaid(true)
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("2026-01-01")
-                        .checkout("2027-01-01")
-                        .build())
-                .additionalneeds("newspaper")
-                .build();
+    @Test
+    @Tags({@Tag("api"), @Tag("negative")})
+    @DisplayName("Успешное создание бронирования с датами в невалидном формате")
+    void createBookingWithInvalidDatesTest() {
+        BookingDTO request = BookingSteps.buildBookingRequestWithInvalidDates();
+
+        Response response = bookingApiClient.createBooking(request);
+        assertThat(response.getStatusCode()).isEqualTo(200);
+
+        CreateBookingResponse createBookingResponse = response.as(CreateBookingResponse.class);
+        assertThat(createBookingResponse).isNotNull();
+
+        BookingSteps.bookingWithInvalidDatesShouldBeEqual(request, createBookingResponse.getBooking());
     }
 
 
-    private static BookingDTO buildBookingRequestWithNegativeTotalPrice() {
-        return BookingDTO.builder()
-                .firstname("Ivan")
-                .lastname("Dorn")
-                .totalprice(-500)
-                .depositpaid(true)
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("2026-01-01")
-                        .checkout("2027-01-01")
-                        .build())
-                .additionalneeds("newspaper")
-                .build();
+    @Test
+    @Tags({@Tag("api"), @Tag("negative")})
+    @DisplayName("Ошибка при создании бронирования с пустым телом запроса")
+    void errorCreateBookingWithEmptyReqBodyTest() {
+        Response errorResponse = bookingApiClient.createBookingWithEmptyBody();
+        assertThat(errorResponse.getStatusCode()).isEqualTo(500);
+
+        String errorText = errorResponse.getBody().asString();
+        assertThat(errorText).isEqualTo("Internal Server Error");
     }
 
-    private static BookingDTO buildBookingRequestWithInvalidDates() {
-        return BookingDTO.builder()
-                .firstname("Ivan")
-                .lastname("Dorn")
-                .totalprice(1000)
-                .depositpaid(true)
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("третье сентября")
-                        .checkout("третье сентября")
-                        .build())
-                .additionalneeds("newspaper")
-                .build();
-    }
-
-    private static BookingDTO buildBookingRequestWithInvalidDatePeriod() {
-        return BookingDTO.builder()
-                .firstname("Ivan")
-                .lastname("Dorn")
-                .totalprice(1000)
-                .depositpaid(true)
-                .bookingdates(BookingDTO.BookingDates.builder()
-                        .checkin("2027-01-01")
-                        .checkout("2026-01-01")
-                        .build())
-                .additionalneeds("newspaper")
-                .build();
+    static Stream<Arguments> getInvalidCredentials() {
+        return Stream.of(
+                Arguments.of("admin", "pswd"),
+                Arguments.of("admin@gmail.com", "password123"),
+                Arguments.of("admin", ""),
+                Arguments.of("", "password123")
+        );
     }
 }
