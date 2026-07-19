@@ -17,6 +17,13 @@ public class BookingDTO {
     private BookingDates bookingdates;
     private String additionalneeds;
 
+    public BookingDTO(String firstname, Integer totalprice, String checkin) {
+        this.firstname = firstname;
+        this.totalprice = totalprice;
+        this.bookingdates = new BookingDates();
+        this.bookingdates.checkin = checkin;
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Data
     @NoArgsConstructor
