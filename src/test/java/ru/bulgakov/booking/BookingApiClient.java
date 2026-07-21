@@ -41,15 +41,6 @@ public class BookingApiClient {
                 .extract().response();
     }
 
-    @Step("Авторизация с пустым телом запроса")
-    public Response authWithEmptyBody() {
-        return given(spec)
-                .body("{}")
-                .post( "/auth")
-                .then()
-                .extract().response();
-    }
-
     @Step("Создание бронирования")
     public Response createBooking(BookingDTO bookingDTO) {
         return  given(spec)
