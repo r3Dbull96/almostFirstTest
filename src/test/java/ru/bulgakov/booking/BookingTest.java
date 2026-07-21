@@ -1,5 +1,6 @@
 package ru.bulgakov.booking;
 
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.response.Response;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.DisplayName;
@@ -10,23 +11,25 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import ru.bulgakov.booking.config.BookingConfig;
-import ru.bulgakov.booking.dto.AuthErrorResponse;
-import ru.bulgakov.booking.dto.AuthResponse;
-import ru.bulgakov.booking.dto.BookingDTO;
-import ru.bulgakov.booking.dto.CreateBookingResponse;
+import ru.bulgakov.booking.dto.*;
 import ru.bulgakov.booking.steps.BookingSteps;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static ru.bulgakov.booking.config.BookingApiConfig.getBookingConfig;
-import static ru.bulgakov.booking.steps.BookingSteps.buildBookingRequest;
+import static ru.bulgakov.booking.steps.BookingSteps.ramdomBooking;
 
 public class BookingTest extends BaseApiTest {
     private static final Faker faker = new Faker();
     private static final BookingConfig CFG = getBookingConfig();
+
     private final BookingApiClient bookingApiClient = new BookingApiClient();
+    private final BookingSteps bookingSteps = new BookingSteps();
+
 
     @Test
     @Tags({@Tag("api"), @Tag("positive")})
@@ -78,75 +81,81 @@ public class BookingTest extends BaseApiTest {
     @Tags({@Tag("api"), @Tag("positive")})
     @DisplayName("Создание бронирования")
     void createBookingTest() {
-        BookingDTO bookingDTO = buildBookingRequest();
-        Response response = bookingApiClient.createBooking(bookingDTO);
+        BookingDTO booking = ramdomBooking();
+        Response response = bookingApiClient.createBooking(booking);
         assertThat(response.getStatusCode()).isEqualTo(200);
 
         CreateBookingResponse createBookingResponse = response.as(CreateBookingResponse.class);
         assertThat(createBookingResponse).isNotNull();
 
-        BookingSteps.bookingShouldBeEqual(bookingDTO, createBookingResponse.getBooking());
+        BookingSteps.bookingShouldBeEqual(booking, createBookingResponse.getBooking());
     }
 
     @Test
     @Tags({@Tag("api"), @Tag("positive")})
     @DisplayName("Получение бронирования по id")
     void getBookingTest() {
-        BookingDTO bookingDTO = buildBookingRequest();
-        Response createResponse = bookingApiClient.createBooking(bookingDTO);
-        assertThat(createResponse.getStatusCode()).isEqualTo(200);
+        CreateBookingResponse createResponse = bookingSteps.createBooking();
 
-        CreateBookingResponse createBookingResponse = createResponse.as(CreateBookingResponse.class);
-
-        Response getResponse = bookingApiClient.getBooking(createBookingResponse.getBookingid());
+        Response getResponse = bookingApiClient.getBooking(createResponse.getBookingid());
         assertThat(getResponse.getStatusCode()).isEqualTo(200);
 
+        BookingSteps.bookingShouldBeEqual(createResponse.getBooking(), getResponse.as(BookingDTO.class));
+    }
 
-        BookingSteps.bookingShouldBeEqual(createBookingResponse.getBooking(), getResponse.as(BookingDTO.class));
+    @Test
+    @DisplayName("Получение списка бронирований по фамилии")
+    void getBookingsByLastName() {
+        int bookingsQuantity = 5;
+        String lastname = faker.name().lastName();
+
+        List<Integer> bookingIds = bookingSteps.generateBookings(bookingsQuantity, lastname);
+
+        Response resp = bookingApiClient.getBookingsWithFilters(Map.of("lastname", lastname));
+        assertThat(resp.getStatusCode()).isEqualTo(200);
+
+        List<BookingId> bookings = resp.as(new TypeRef<List<BookingId>>() {});
+        BookingSteps.bookingListShouldBeValid(bookings, bookingIds, bookingsQuantity);
     }
 
     @Test
     @Tags({@Tag("api"), @Tag("positive")})
     @DisplayName("Полное обновление бронирования")
     void updateBookingTest() {
-        Response createResp = bookingApiClient.createBooking(buildBookingRequest());
-        assertThat(createResp.getStatusCode()).isEqualTo(200);
+        Integer bookingId = bookingSteps.createBooking().getBookingid();
 
-        BookingDTO bookingDTO = buildBookingRequest();
+        BookingDTO newBooking = ramdomBooking();
 
-        Response updateResponse = bookingApiClient
-                .updateBooking(bookingDTO, createResp.as(CreateBookingResponse.class).getBookingid());
+        Response updateResponse = bookingApiClient.updateBooking(newBooking, bookingId);
         assertThat(updateResponse.getStatusCode()).isEqualTo(200);
 
         BookingDTO updatedBookingDTO = updateResponse.as(BookingDTO.class);
 
-        BookingSteps.bookingShouldBeEqual(bookingDTO, updatedBookingDTO);
+        BookingSteps.bookingShouldBeEqual(newBooking, updatedBookingDTO);
     }
 
     @Test
     @Tags({@Tag("api"), @Tag("positive")})
     @DisplayName("Частичное обновление бронирования")
     void partialUpdateBookingTest() {
-        Response createResp = bookingApiClient.createBooking(buildBookingRequest());
-        assertThat(createResp.getStatusCode()).isEqualTo(200);
+        Integer bookingId = bookingSteps.createBooking().getBookingid();
 
-        BookingDTO bookingDTO = new BookingDTO(
+        BookingDTO newBooking = new BookingDTO(
                 faker.football().players(),
                 faker.number().numberBetween(10001, 12000),
                 "2026-02-01");
 
-        Response updateResponse = bookingApiClient
-                .partialUpdateBooking(bookingDTO, createResp.as(CreateBookingResponse.class).getBookingid());
+        Response updateResponse = bookingApiClient.partialUpdateBooking(newBooking, bookingId);
         assertThat(updateResponse.getStatusCode()).isEqualTo(200);
 
         BookingDTO updatedBookingDTO = updateResponse.as(BookingDTO.class);
 
         assertAll(
-                () -> assertThat(bookingDTO.getFirstname())
+                () -> assertThat(newBooking.getFirstname())
                         .isEqualTo(updatedBookingDTO.getFirstname()),
-                () -> assertThat(bookingDTO.getTotalprice())
+                () -> assertThat(newBooking.getTotalprice())
                         .isEqualTo(updatedBookingDTO.getTotalprice()),
-                () -> assertThat(bookingDTO.getBookingdates().getCheckin())
+                () -> assertThat(newBooking.getBookingdates().getCheckin())
                         .isEqualTo(updatedBookingDTO.getBookingdates().getCheckin())
         );
     }
@@ -155,8 +164,8 @@ public class BookingTest extends BaseApiTest {
     @Tags({@Tag("api"), @Tag("positive")})
     @DisplayName("Удаление бронирования")
     void deleteBookingTest() {
-        Integer bookingId = bookingApiClient
-                .createBooking(buildBookingRequest()).as(CreateBookingResponse.class).getBookingid();
+        Integer bookingId = bookingSteps.createBooking().getBookingid();
+
 
         Response deleteResp = bookingApiClient.deleteBooking(bookingId);
         assertThat(deleteResp.getStatusCode()).isEqualTo(201);
