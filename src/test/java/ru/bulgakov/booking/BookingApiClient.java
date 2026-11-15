@@ -110,6 +110,14 @@ public class BookingApiClient {
                 .extract().response();
     }
 
+    @Step("Проверить доступность сервиса")
+    public Response healthCheck() {
+        return  given()
+                .get( CFG.bookingUrl() + "/ping")
+                .then()
+                .extract().response();
+    }
+
     private String getToken() {
         return auth(CFG.username(), CFG.password()).as(AuthResponse.class).getToken();
     }
